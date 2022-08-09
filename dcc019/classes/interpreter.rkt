@@ -116,12 +116,12 @@
 
 ; call-by-value
 ; proc-val :: Var x Expr x Env -> Proc
-(define (proc-val var exp Δ)
+#;(define (proc-val var exp Δ)
   (lambda (val)
     (value-of exp (extend-env var (newref val) Δ))))
 
 ; apply-proc :: Proc x ExpVal -> ExpVal  
-(define (apply-proc proc val)
+#;(define (apply-proc proc val)
   (proc val))
 
 (define (apply-proc-ref proc val)
