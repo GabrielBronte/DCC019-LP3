@@ -102,7 +102,7 @@
        (map
         (lambda (field-name)
           (newref field-name))
-        (ast:decl-fields (find-class class-name))))))
+        (ast:decl-fields (lookup-class class-name))))))
 
 ; initialize-class-env! :: () -> Unspecified
 (define initialize-class-env
@@ -116,13 +116,13 @@
   (lambda (class-name super-name field-names m-decls)
     (let ([field-names 
             (append-field-names
-              (ast:decl-fields (find-class super-name))
+              (ast:decl-fields (lookup-class super-name))
               field-names)])
           (add-to-class-env!
             class-name
             (ast:decl class-name super-name field-names 
               (merge-method-envs
-                (ast:decl-methods (find-class super-name))
+                (ast:decl-methods (lookup-class super-name))
                 (method-decls->method-env
                 m-decls super-name)
               )
@@ -144,17 +144,12 @@
                             empty-env)))))(display "Metodo não encontrado\n")))
 
 
-; find-class :: ClassName -> Class
-(define find-class
+; lookup-class :: ClassName -> Class
+(define lookup-class
   (lambda (name)
-    (let ((maybe-pair 
-            (assf 
-              (lambda (x) 
-                (string=? name x))
-            the-class-env)))
-      (if maybe-pair 
-        (cadr maybe-pair)
-        (display "\nClasse desconhecida\n"))
+    (let ((maybe-pair (assf (lambda (x) (string=? name x)) the-class-env)))
+      (if maybe-pair (cadr maybe-pair)
+        (display "\nClasse nao encontrada\n"))
   )))
 
 ; fresh-identifier           
@@ -195,7 +190,7 @@
 ; find-method :: Sym x Sym -> Method
 (define find-method
   (lambda (class-name method_name)
-    (let ([this-class (find-class class-name)])
+    (let ([this-class (lookup-class class-name)])
       (if (void? this-class) (display "Classe não encontrada\n")
           (let ([m-env (ast:decl-methods this-class)])
              (let ([maybe-pair (assq method_name m-env)])
