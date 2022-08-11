@@ -70,7 +70,6 @@
     ))
 
 
-; Comportamento de uma lista de expressões, podendo ser vazia.
 (define values-of-exps
   (lambda (exps env)
     (map
@@ -80,21 +79,17 @@
 (define (apply-env env var)
   (env var))
 
-; value-of-program :: Program -> ExpVal
 (define value-of-program
   (lambda (prog)
     (match-define  
       (ast:prog decls exp) prog)
     (empty-store)
     (initialize-class-env)
-    (printf "Classe criada com sucesso \n")
     ;(value-of exp the-class-env)
   ))
 
-; Tipo de dados object, que representa um objeto, que é uma instância de uma classe. Possui nome da classe e campos.
 (struct object (class-name fields)) 
 
-; new-object :: ClassName -> Obj
  (define new-object
    (lambda (class-name)
      (object
@@ -104,33 +99,26 @@
           (newref field-name))
         (ast:decl-fields (lookup-class class-name))))))
 
-; initialize-class-env! :: () -> Unspecified
 (define initialize-class-env
   (lambda ()
     (set! the-class-env
       (list
         (list "object" (ast:decl  #f #f  '() '()))))))
 
-; my initialize-class-decl! :: ClassDecl -> Unspecified
-(define initialize-class-decl!
+(define initialize-class-decl
   (lambda (class-name super-name field-names m-decls)
     (let ([field-names 
             (append-field-names
               (ast:decl-fields (lookup-class super-name))
               field-names)])
-          (add-to-class-env!
+          (add-to-class-env
             class-name
             (ast:decl class-name super-name field-names 
               (merge-method-envs
                 (ast:decl-methods (lookup-class super-name))
                 (method-decls->method-env
-                m-decls super-name)
-              )
-            )
-          )
-    )
-  ))
-; apply-method :: Method x Obj x ListOf(ExpVal) -> ExpVal
+                m-decls super-name)))))))
+
 (define (apply-method class-method self args)
   (if (ast:method? class-method)
         (let ([vars (ast:method-params class-method)]
@@ -143,16 +131,13 @@
                 (extend-env (object-fields self)
                             empty-env)))))(display "Metodo não encontrado\n")))
 
-
-; lookup-class :: ClassName -> Class
 (define lookup-class
   (lambda (name)
     (let ((maybe-pair (assf (lambda (x) (string=? name x)) the-class-env)))
       (if maybe-pair (cadr maybe-pair)
         (display "\nClasse nao encontrada\n"))
   )))
-
-; fresh-identifier           
+          
 (define fresh-identifier
   (let ((sn 0))
     (lambda (identifier)  
@@ -163,7 +148,6 @@
         "%"
         (number->string sn))))))
 
-; append-field-names :: Listof(FieldName) x Listof(FieldName) -> Listof(FieldName)
 (define append-field-names
   (lambda (super-fields new-fields)
     (cond
@@ -176,18 +160,15 @@
         (append-field-names
          (cdr super-fields) new-fields))))))
 
-;the-class :: ClassEnv
 (define the-class-env '())
 
-; add-to-class-env! :: ClassName x Class -> Unspecified
-(define add-to-class-env!
+(define add-to-class-env
   (lambda (class-name class)
     (set! the-class-env
           (cons
            (list class-name class)
            the-class-env))))
 
-; find-method :: Sym x Sym -> Method
 (define find-method
   (lambda (class-name method_name)
     (let ([this-class (lookup-class class-name)])
@@ -197,7 +178,6 @@
                (if (pair? maybe-pair) (cadr maybe-pair)
                    (display "Método não encontrado\n"))))))))
 
-; method-decls->method-env :: Listof(MethodDecl) x ClassName -> MethodEnv
 (define method-decls->method-env
   (lambda (m-decls super-name)
     (map
@@ -208,11 +188,10 @@
               (ast:method super-name params body))) 
      m-decls)))
 
-; merge-method-envs :: MethodEnv x MethodEnv -> MethodEnv
 (define merge-method-envs
   (lambda (super-m-env new-m-env)
     (append new-m-env super-m-env)))
-; extend-env-with-self-and-super
+
 (define (extend-env-with-self-and-super self super-name saved-env)
   (lambda (svar)
     (case svar
